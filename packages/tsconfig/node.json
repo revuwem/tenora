@@ -1,0 +1,11 @@
+{
+  "extends": "@tenora/tsconfig/base",
+  "compilerOptions": {
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "target": "ES2023",
+    "lib": [
+      "ES2023"
+    ]
+  }
+}
