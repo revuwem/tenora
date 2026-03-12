@@ -14,7 +14,10 @@
     "check": "turbo run check",
     "test": "turbo run test",
     "type-check": "turbo run type-check",
-    "format": "turbo run format"
+    "format": "turbo run format",
+    "docker:up": "docker compose up",
+    "docker:up:detached": "docker compose up -d",
+    "docker:down": "docker compose down"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.6",
