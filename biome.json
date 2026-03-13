@@ -15,5 +15,10 @@
     "clientKind": "git",
     "enabled": true,
     "useIgnoreFile": true
+  },
+  "css": {
+    "parser": {
+      "tailwindDirectives": true
+    }
   }
 }
