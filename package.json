@@ -2,7 +2,7 @@
   "name": "tenora",
   "version": "0.1.0",
   "private": true,
-  "packageManager": "bun@1.0.25",
+  "packageManager": "bun@1.3.10",
   "workspaces": [
     "apps/*",
     "packages/*"
@@ -11,10 +11,15 @@
     "dev": "turbo run dev",
     "build": "turbo run build",
     "lint": "turbo run lint",
-    "check": "turbo run check",
-    "test": "turbo run test",
+    "lint:fix": "turbo run lint -- --write",
     "type-check": "turbo run type-check",
-    "format": "turbo run format"
+    "test": "turbo run test",
+    "check": "turbo run check",
+    "format": "turbo run format --log-order=grouped",
+    "format:fix": "turbo run format --log-order=grouped -- --write",
+    "docker:up": "docker compose up",
+    "docker:up:detached": "docker compose up -d",
+    "docker:down": "docker compose down"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.6",
