@@ -13,10 +13,11 @@
 		"check": "bun run lint && bun run type-check && bun run test"
 	},
 	"dependencies": {
+		"@tenora/tsconfig": "workspace:*",
+		"@tenora/ui": "workspace:*",
 		"next": "16.1.6",
 		"react": "19.2.3",
-		"react-dom": "19.2.3",
-		"@tenora/tsconfig": "workspace:*"
+		"react-dom": "19.2.3"
 	},
 	"devDependencies": {
 		"@tailwindcss/postcss": "^4",

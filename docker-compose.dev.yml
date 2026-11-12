@@ -1,0 +1,50 @@
+# Development stack: hot reload for web (next dev) and api (nest --watch).
+#   bun run docker:dev
+#
+# The repo is bind-mounted into /app so edits on the host reload the containers.
+# Each node_modules directory is masked with an anonymous volume so the Linux
+# dependencies installed in the image are used instead of the host's macOS ones.
+# `-V` (used by the docker:dev script) recreates those volumes on every start,
+# so dependency changes always come from the freshly built image.
+name: tenora-dev
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+      target: dev
+    environment:
+      - NODE_ENV=development
+      - PORT=8000
+      # Poll for changes: file events don't always cross the macOS bind mount.
+      - CHOKIDAR_USEPOLLING=true
+      - TSC_WATCHFILE=PriorityPollingInterval
+      - TSC_WATCHDIRECTORY=FixedPollingInterval
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/apps/api/node_modules
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      target: dev
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - WATCHPACK_POLLING=true
+      - NEXT_TELEMETRY_DISABLED=1
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/apps/web/node_modules
+      - /app/packages/ui/node_modules
+      - /app/apps/web/.next
+    depends_on:
+      - api

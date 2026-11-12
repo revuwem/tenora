@@ -1,0 +1,5 @@
+{
+	"extends": "@tenora/tsconfig/react",
+	"include": ["**/*.ts", "**/*.tsx"],
+	"exclude": ["node_modules"]
+}
