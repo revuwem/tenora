@@ -33,18 +33,37 @@ EXPOSE 3000
 CMD ["bun", "run", "dev"]
 
 
+# ---- prod: prune ----
+# `turbo prune --docker` writes out/json (package.json files + pruned lockfile) and
+# out/full (source), limited to the web app and the workspace packages it depends on.
+# The builder installs from out/json only, so the install layer is reused until the
+# web app's dependencies change, and it never installs the api's dependencies.
+FROM oven/bun:1 AS pruner
+
+WORKDIR /app
+
+COPY . .
+# Nothing is installed yet, so run the turbo version declared in the root package.json
+# (leading ^ or ~ stripped; pin the exact version there so this matches the lockfile).
+# turbo warns that it is not "locally installed": expected at this stage.
+RUN version="$(bun -p 'require("./package.json").devDependencies.turbo' | sed -E 's/^[\^~]//')" \
+  && test -n "$version" \
+  && echo "turbo version from package.json: $version" \
+  && bunx turbo@${version} prune web --docker
+
+
 # ---- prod: build ----
 FROM oven/bun:1 AS builder
 
 WORKDIR /app
 
-# Install dependencies with Bun using the existing lockfile
-COPY package.json bun.lock turbo.json ./
-COPY apps/web/package.json apps/web/package.json
-COPY apps ./apps
-COPY packages ./packages
+COPY --from=pruner /app/out/json/ .
+COPY --from=pruner /app/out/bun.lock ./bun.lock
 
-RUN bun install --frozen-lockfile
+RUN --mount=type=cache,target=/root/.bun/install/cache \
+  bun install --frozen-lockfile
+
+COPY --from=pruner /app/out/full/ .
 
 # NEXT_PUBLIC_* values are inlined into the client bundle at build time.
 ARG NEXT_PUBLIC_API_URL

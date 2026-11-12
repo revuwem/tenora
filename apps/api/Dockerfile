@@ -39,18 +39,37 @@ EXPOSE 8000
 CMD ["bun", "run", "dev"]
 
 
+# ---- prod: prune ----
+# `turbo prune --docker` writes out/json (package.json files + pruned lockfile) and
+# out/full (source), limited to the api and the workspace packages it depends on.
+# The builder installs from out/json only, so the install layer is reused until the
+# api's dependencies change, and it never installs the web app's dependencies.
+FROM oven/bun:1 AS pruner
+
+WORKDIR /app
+
+COPY . .
+# Nothing is installed yet, so run the turbo version declared in the root package.json
+# (leading ^ or ~ stripped; pin the exact version there so this matches the lockfile).
+# turbo warns that it is not "locally installed": expected at this stage.
+RUN version="$(bun -p 'require("./package.json").devDependencies.turbo' | sed -E 's/^[\^~]//')" \
+  && test -n "$version" \
+  && echo "turbo version from package.json: $version" \
+  && bunx turbo@${version} prune api --docker
+
+
 # ---- prod: build ----
 FROM oven/bun:1 AS builder
 
 WORKDIR /app
 
-# Install dependencies with Bun using the existing lockfile
-COPY package.json bun.lock turbo.json ./
-COPY apps/api/package.json apps/api/package.json
-COPY apps ./apps
-COPY packages ./packages
+COPY --from=pruner /app/out/json/ .
+COPY --from=pruner /app/out/bun.lock ./bun.lock
 
-RUN bun install --frozen-lockfile
+RUN --mount=type=cache,target=/root/.bun/install/cache \
+  bun install --frozen-lockfile
+
+COPY --from=pruner /app/out/full/ .
 
 # Build only the API app (NestJS) so we get dist output
 RUN bunx turbo run build --filter=api...
