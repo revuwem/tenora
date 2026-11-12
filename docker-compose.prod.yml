@@ -1,5 +1,6 @@
 # Production-like stack: optimized builds, no source mounts.
 #   bun run docker:prod
+# No container_name: fixed names would collide across worktrees (see scripts/docker.sh).
 name: tenora-prod
 
 services:
@@ -7,24 +8,27 @@ services:
     build:
       context: .
       dockerfile: apps/api/Dockerfile
-    container_name: tenora-api
     environment:
       - NODE_ENV=production
       - PORT=8000
+      - CORS_ORIGIN=http://localhost:${WEB_PORT:-3000}
     ports:
-      - "8000:8000"
+      - "${API_PORT:-8000}:8000"
     restart: unless-stopped
 
   web:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
-    container_name: tenora-web
+      args:
+        # Inlined into the browser bundle at build time, so it is baked per worktree.
+        NEXT_PUBLIC_API_URL: http://localhost:${API_PORT:-8000}
     environment:
       - NODE_ENV=production
       - PORT=3000
+      - API_INTERNAL_URL=http://api:8000
     ports:
-      - "3000:3000"
+      - "${WEB_PORT:-3000}:3000"
     depends_on:
       - api
     restart: unless-stopped

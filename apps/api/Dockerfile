@@ -4,18 +4,30 @@
 # procps provides `ps`, which `nest start --watch` needs to kill the old server on reload.
 FROM node:20-slim AS dev
 
-RUN apt-get update \
-  && apt-get install -y --no-install-recommends procps \
-  && rm -rf /var/lib/apt/lists/*
 COPY --from=oven/bun:1 /usr/local/bin/bun /usr/local/bin/bun
 
 WORKDIR /app
 
+# Install from the manifests only, so editing source never re-runs the install.
+# Keep these lines identical to the web dev stage so both images share the layer
+# (which is why the apt-get step comes after the install).
+# Add a line here when a new workspace package is created.
 COPY package.json bun.lock turbo.json ./
+COPY apps/api/package.json apps/api/package.json
+COPY apps/web/package.json apps/web/package.json
+COPY packages/tsconfig/package.json packages/tsconfig/package.json
+COPY packages/ui/package.json packages/ui/package.json
+
+# The cache mount keeps bun's download cache between builds.
+RUN --mount=type=cache,target=/root/.bun/install/cache \
+  bun install --frozen-lockfile
+
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends procps \
+  && rm -rf /var/lib/apt/lists/*
+
 COPY apps ./apps
 COPY packages ./packages
-
-RUN bun install --frozen-lockfile
 
 WORKDIR /app/apps/api
 

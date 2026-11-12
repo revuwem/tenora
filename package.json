@@ -17,11 +17,12 @@
     "check": "turbo run check",
     "format": "turbo run format --log-order=grouped",
     "format:fix": "turbo run format --log-order=grouped -- --write",
-    "docker:dev": "docker compose -f docker-compose.dev.yml up --build -V",
-    "docker:dev:down": "docker compose -f docker-compose.dev.yml down",
-    "docker:prod": "docker compose -f docker-compose.prod.yml up --build",
-    "docker:prod:detached": "docker compose -f docker-compose.prod.yml up --build -d",
-    "docker:prod:down": "docker compose -f docker-compose.prod.yml down"
+    "docker:dev": "scripts/docker.sh dev up --build -V",
+    "docker:dev:down": "scripts/docker.sh dev down",
+    "docker:ports": "scripts/docker.sh dev ports",
+    "docker:prod": "scripts/docker.sh prod up --build",
+    "docker:prod:detached": "scripts/docker.sh prod up --build -d",
+    "docker:prod:down": "scripts/docker.sh prod down"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.6",
