@@ -1,0 +1,20 @@
+{
+	"$schema": "https://ui.shadcn.com/schema.json",
+	"style": "new-york",
+	"rsc": true,
+	"tsx": true,
+	"tailwind": {
+		"config": "",
+		"css": "@tenora/ui/globals.css",
+		"baseColor": "stone",
+		"cssVariables": true
+	},
+	"iconLibrary": "tabler",
+	"aliases": {
+		"components": "@tenora/ui/components",
+		"hooks": "@tenora/ui/hooks",
+		"lib": "@tenora/ui/lib",
+		"utils": "@tenora/ui/lib/utils",
+		"ui": "@tenora/ui/components/ui"
+	}
+}
