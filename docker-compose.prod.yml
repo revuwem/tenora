@@ -1,4 +1,6 @@
-version: "3.9"
+# Production-like stack: optimized builds, no source mounts.
+#   bun run docker:prod
+name: tenora-prod
 
 services:
   api:
@@ -26,4 +28,3 @@ services:
     depends_on:
       - api
     restart: unless-stopped
-
