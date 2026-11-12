@@ -53,7 +53,7 @@ jobs:
         run: bun run check
 
   # Runs in parallel with `checks`: it only verifies that the production images build.
-  docker-build:
+  docker-image:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
@@ -82,3 +82,15 @@ jobs:
             NEXT_PUBLIC_API_URL=http://localhost:8000
           cache-from: type=gha,scope=${{ matrix.app }}
           cache-to: type=gha,mode=max,scope=${{ matrix.app }}
+
+  # Stable name for the branch ruleset's required check "docker-build": a matrix job is
+  # reported as "<job> (<matrix value>)", so the ruleset can't require it by one name.
+  docker-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+    needs: docker-image
+    if: ${{ always() }}
+
+    steps:
+      - name: Require all image builds to pass
+        run: test "${{ needs.docker-image.result }}" = "success"
