@@ -33,11 +33,11 @@
 	},
 	"devDependencies": {
 		"@tenora/tsconfig": "workspace:*",
-		"@types/react": "^19",
-		"@types/react-dom": "^19",
-		"react": "19.2.3",
-		"react-dom": "19.2.3",
-		"tailwindcss": "^4",
-		"typescript": "^5"
+		"@types/react": "catalog:",
+		"@types/react-dom": "catalog:",
+		"react": "catalog:",
+		"react-dom": "catalog:",
+		"tailwindcss": "catalog:",
+		"typescript": "catalog:"
 	}
 }

@@ -3,10 +3,18 @@
   "version": "0.1.0",
   "private": true,
   "packageManager": "bun@1.3.10",
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
+  "workspaces": {
+    "packages": ["apps/*", "packages/*"],
+    "catalog": {
+      "typescript": "5.9.3",
+      "react": "19.2.3",
+      "react-dom": "19.2.3",
+      "@types/node": "^24",
+      "@types/react": "^19",
+      "@types/react-dom": "^19",
+      "tailwindcss": "^4"
+    }
+  },
   "scripts": {
     "dev": "turbo run dev",
     "build": "turbo run build",
@@ -14,7 +22,7 @@
     "lint:fix": "turbo run lint -- --write",
     "type-check": "turbo run type-check",
     "test": "turbo run test",
-    "check": "turbo run check",
+    "check": "turbo run lint type-check format test",
     "format": "turbo run format --log-order=grouped",
     "format:fix": "turbo run format --log-order=grouped -- --write",
     "docker:dev": "scripts/docker.sh dev up --build -V",
@@ -25,8 +33,8 @@
     "docker:prod:down": "scripts/docker.sh prod down"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.4.6",
-    "turbo": "^2.8.16",
-    "typescript": "^5.9.3"
+    "@biomejs/biome": "2.4.6",
+    "turbo": "2.8.16",
+    "typescript": "catalog:"
   }
 }

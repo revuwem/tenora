@@ -24,10 +24,6 @@
     "type-check": {
       "dependsOn": ["^build"],
       "outputs": []
-    },
-    "check": {
-      "dependsOn": ["lint", "type-check", "format", "test"],
-      "outputs": []
     }
   }
 }
