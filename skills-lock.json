@@ -1,20 +1,26 @@
 {
-  "version": 1,
+  "version": 2,
   "skills": {
     "bun-development": {
       "source": "sickn33/antigravity-awesome-skills",
       "sourceType": "github",
-      "computedHash": "2495ba6f5ade951aea79cd76303c29173edb5512fb4b4e896b2cf763b86af466"
+      "computedHash": "db544aedd92642baf02ca08e987987b7db530c6b67a7a0e6a5a437b6023c3edc"
     },
     "find-skills": {
       "source": "vercel-labs/skills",
       "sourceType": "github",
-      "computedHash": "6412eb4eb3b91595ebab937f0c69501240e7ba761b3d82510b5cf506ec5c7adc"
+      "computedHash": "bad9884f0a4a7e827bf677c4b63e04053b2290c6671954fcb5a6cae692c5a13f"
     },
     "monorepo-management": {
       "source": "wshobson/agents",
       "sourceType": "github",
-      "computedHash": "082be44c6320ce348b19c33f08f527ad604eed2da48f92e8c7010e206d5450cd"
+      "computedHash": "4c56b233b0e7c590e86b32e64d2c88069f0ceec4bf92effc30698df1eb907686"
+    },
+    "multi-stage-dockerfile": {
+      "source": "github/awesome-copilot",
+      "sourceType": "github",
+      "skillPath": "skills/multi-stage-dockerfile/SKILL.md",
+      "computedHash": "c74ad7dbfdc563e9a95308b7ff812882fa79872a097a2950c4f8346c815bdab6"
     }
   }
 }

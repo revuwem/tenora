@@ -1,6 +1,10 @@
 # Development stack: hot reload for web (next dev) and api (nest --watch).
 #   bun run docker:dev
 #
+# Run it through scripts/docker.sh (the docker:dev scripts do): in a git worktree it
+# picks a separate project name and host ports (API_PORT / WEB_PORT) so worktrees
+# don't collide. The main checkout keeps 3000 / 8000.
+#
 # The repo is bind-mounted into /app so edits on the host reload the containers.
 # Each node_modules directory is masked with an anonymous volume so the Linux
 # dependencies installed in the image are used instead of the host's macOS ones.
@@ -17,12 +21,14 @@ services:
     environment:
       - NODE_ENV=development
       - PORT=8000
+      # Browser origin allowed to call the api (the web app's published port).
+      - CORS_ORIGIN=http://localhost:${WEB_PORT:-3000}
       # Poll for changes: file events don't always cross the macOS bind mount.
       - CHOKIDAR_USEPOLLING=true
       - TSC_WATCHFILE=PriorityPollingInterval
       - TSC_WATCHDIRECTORY=FixedPollingInterval
     ports:
-      - "8000:8000"
+      - "${API_PORT:-8000}:8000"
     volumes:
       - .:/app
       - /app/node_modules
@@ -36,10 +42,14 @@ services:
     environment:
       - NODE_ENV=development
       - PORT=3000
+      # Browser calls the api on its published host port; the server side uses the
+      # Docker network address.
+      - NEXT_PUBLIC_API_URL=http://localhost:${API_PORT:-8000}
+      - API_INTERNAL_URL=http://api:8000
       - WATCHPACK_POLLING=true
       - NEXT_TELEMETRY_DISABLED=1
     ports:
-      - "3000:3000"
+      - "${WEB_PORT:-3000}:3000"
     volumes:
       - .:/app
       - /app/node_modules

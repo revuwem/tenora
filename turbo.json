@@ -4,6 +4,7 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
+      "env": ["NEXT_PUBLIC_API_URL"],
       "outputs": ["dist/**", ".next/**", "!.next/cache/**"]
     },
     "dev": {
@@ -22,10 +23,6 @@
     },
     "type-check": {
       "dependsOn": ["^build"],
-      "outputs": []
-    },
-    "check": {
-      "dependsOn": ["lint", "type-check", "format", "test"],
       "outputs": []
     }
   }

@@ -1,0 +1,32 @@
+version: 2
+
+# Keeps the pinned versions (actions, base images, dependencies) from going stale.
+# Updates arrive as weekly PRs, grouped so there is one PR per ecosystem.
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]
+
+  # Base images (node, oven/bun) in each Dockerfile.
+  - package-ecosystem: docker
+    directories:
+      - /apps/api
+      - /apps/web
+    schedule:
+      interval: weekly
+    groups:
+      docker:
+        patterns: ["*"]
+
+  - package-ecosystem: bun
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      dependencies:
+        patterns: ["*"]
+        update-types: [minor, patch]
