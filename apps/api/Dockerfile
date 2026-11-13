@@ -8,7 +8,7 @@ FROM oven/bun:${BUN_VERSION} AS bun
 # Build with `--target dev`. The default (last) stage below is the production runtime.
 # Real Node (same major as the prod runtime) plus the bun binary for installs/scripts.
 # procps provides `ps`, which `nest start --watch` needs to kill the old server on reload.
-FROM node:24-slim AS dev
+FROM node:25-slim AS dev
 
 COPY --from=bun /usr/local/bin/bun /usr/local/bin/bun
 
@@ -95,7 +95,7 @@ COPY --from=pruner /app/out/full/ .
 RUN bunx turbo run build --filter=api...
 
 
-FROM node:24-slim AS runtime
+FROM node:25-slim AS runtime
 
 WORKDIR /app/apps/api
 

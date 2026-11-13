@@ -7,7 +7,7 @@ FROM oven/bun:${BUN_VERSION} AS bun
 # ---- dev: install deps only; source is bind-mounted by docker-compose.dev.yml ----
 # Build with `--target dev`. The default (last) stage below is the production runtime.
 # Real Node (same major as the prod runtime) plus the bun binary for installs/scripts.
-FROM node:24-slim AS dev
+FROM node:25-slim AS dev
 
 COPY --from=bun /usr/local/bin/bun /usr/local/bin/bun
 
@@ -81,7 +81,7 @@ RUN --mount=type=cache,target=/app/apps/web/.next/cache \
   bunx turbo run build --filter=web...
 
 
-FROM node:24-slim AS runtime
+FROM node:25-slim AS runtime
 
 WORKDIR /app
 
