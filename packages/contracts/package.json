@@ -1,0 +1,32 @@
+{
+	"name": "@tenora/contracts",
+	"version": "0.0.0",
+	"private": true,
+	"description": "Request and response schemas (zod) shared by the api and the web app",
+	"main": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		}
+	},
+	"scripts": {
+		"build": "tsc -p tsconfig.build.json",
+		"lint": "biome lint .",
+		"format": "biome format .",
+		"type-check": "tsc --noEmit",
+		"test": "vitest run",
+		"check": "bun run lint && bun run type-check && bun run test",
+		"test:watch": "vitest"
+	},
+	"dependencies": {
+		"zod": "^4.1.0"
+	},
+	"devDependencies": {
+		"@tenora/tsconfig": "workspace:*",
+		"@types/node": "catalog:",
+		"typescript": "catalog:",
+		"vitest": "catalog:"
+	}
+}

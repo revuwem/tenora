@@ -18,15 +18,21 @@
 		"test": "vitest run",
 		"check": "bun run lint && bun run type-check && bun run test",
 		"test:watch": "vitest",
-		"test:e2e": "vitest run --config vitest.config.e2e.mts"
+		"test:e2e": "vitest run --config vitest.config.e2e.mts",
+		"db:generate": "drizzle-kit generate",
+		"db:migrate": "bun src/db/migrate.ts",
+		"db:seed": "bun src/db/seed.ts"
 	},
 	"dependencies": {
 		"@nestjs/common": "^11.0.1",
 		"@nestjs/core": "^11.0.1",
 		"@nestjs/platform-express": "^11.0.1",
+		"@tenora/contracts": "workspace:*",
+		"@tenora/tsconfig": "workspace:*",
+		"drizzle-orm": "^0.45.4",
+		"pg": "^8.23.1",
 		"reflect-metadata": "^0.2.2",
-		"rxjs": "^7.8.1",
-		"@tenora/tsconfig": "workspace:*"
+		"rxjs": "^7.8.1"
 	},
 	"devDependencies": {
 		"@nestjs/cli": "^11.0.0",
@@ -34,7 +40,9 @@
 		"@nestjs/testing": "^11.0.1",
 		"@types/express": "^5.0.0",
 		"@types/node": "catalog:",
+		"@types/pg": "^8.23.1",
 		"@types/supertest": "^6.0.2",
+		"drizzle-kit": "^0.31.11",
 		"source-map-support": "^0.5.21",
 		"supertest": "^7.0.0",
 		"ts-loader": "^9.5.2",

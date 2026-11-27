@@ -1,4 +1,4 @@
-import { beforeEach, describe, it } from "vitest";
+import { afterEach, beforeEach, describe, it } from "vitest";
 import { Test, TestingModule } from "@nestjs/testing";
 import { INestApplication } from "@nestjs/common";
 import request from "supertest";
@@ -17,7 +17,11 @@ describe("AppController (e2e)", () => {
 		await app.init();
 	});
 
-	it("/ (GET)", () => {
-		return request(app.getHttpServer()).get("/").expect(200).expect("Hello World, Tenora!");
+	afterEach(async () => {
+		await app.close();
+	});
+
+	it("/health (GET)", () => {
+		return request(app.getHttpServer()).get("/health").expect(200).expect({ status: "ok" });
 	});
 });
