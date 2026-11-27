@@ -1,14 +1,19 @@
 import { Controller, Get, INestApplication, Req } from "@nestjs/common";
+import type { NestExpressApplication } from "@nestjs/platform-express";
 import { Test } from "@nestjs/testing";
+import { eq } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import request from "supertest";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { seedTestOrganization } from "../../test/support/seed-test-organization";
+import { configureApp } from "../app.setup";
 import { AppModule } from "../app.module";
 import { Public } from "../authz/authz.decorators";
 import { AuthModule } from "./auth.module";
 import type { Database } from "../db/db";
 import { DATABASE } from "../db/db.module";
+import { CLIENT_IP_HEADER } from "../common/client-ip";
+import { session } from "./auth.schema";
 import { CurrentUserService } from "./current-user.service";
 
 // Test-only route, to see what the rest of the api would learn from a request.
@@ -23,17 +28,28 @@ class WhoAmIController {
 	}
 }
 
+// Test-only route: what the rest of the api would be told about the client's address.
+@Controller("test")
+class ClientIpEcho {
+	@Get("client-ip")
+	@Public()
+	clientIp(@Req() request: { headers: Record<string, string> }) {
+		return { clientIp: request.headers[CLIENT_IP_HEADER] };
+	}
+}
+
 describe("sign-up and sign-in", () => {
-	let app: INestApplication;
+	let app: NestExpressApplication;
 	let server: ReturnType<INestApplication["getHttpServer"]>;
 	let db: Database;
 
 	beforeAll(async () => {
 		const moduleRef = await Test.createTestingModule({
 			imports: [AppModule, AuthModule],
-			controllers: [WhoAmIController],
+			controllers: [WhoAmIController, ClientIpEcho],
 		}).compile();
-		app = moduleRef.createNestApplication({ bodyParser: false });
+		app = moduleRef.createNestApplication<NestExpressApplication>({ bodyParser: false });
+		configureApp(app);
 		await app.init();
 		server = app.getHttpServer();
 		db = app.get(DATABASE);
@@ -71,6 +87,49 @@ describe("sign-up and sign-in", () => {
 		expect(signedIn.status).toBe(200);
 		expect(signedIn.body.user.email).toBe(user.email);
 		expect(sessionCookieHeaders(signedIn).join(";")).toMatch(/HttpOnly/i);
+	});
+
+	describe("the client address Better Auth records", () => {
+		// What a client could send, then what a trusted reverse proxy would append.
+		const signInFromBehindProxy = async (target: INestApplication) => {
+			const user = credentials();
+			await request(target.getHttpServer()).post("/api/auth/sign-up/email").send(user);
+			const signedIn = await request(target.getHttpServer())
+				.post("/api/auth/sign-in/email")
+				.set("X-Forwarded-For", "1.2.3.4, 9.9.9.9")
+				.set(CLIENT_IP_HEADER, "6.6.6.6")
+				.send({ email: user.email, password: user.password });
+			const [row] = await db
+				.select({ ipAddress: session.ipAddress })
+				.from(session)
+				.where(eq(session.token, signedIn.body.token));
+			return row.ipAddress;
+		};
+
+		it("ignores every address the client wrote, by default", async () => {
+			const echoed = await request(server)
+				.get("/test/client-ip")
+				.set("X-Forwarded-For", "1.2.3.4, 9.9.9.9")
+				.set(CLIENT_IP_HEADER, "6.6.6.6");
+
+			// The socket's own address (this test client connects from localhost).
+			expect(echoed.body.clientIp).toMatch(/(^|:)127\.0\.0\.1$/);
+			expect(await signInFromBehindProxy(app)).toBe("127.0.0.1");
+		});
+
+		it("takes the address a trusted proxy saw, when told to trust one hop", async () => {
+			const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
+			const trusting = moduleRef.createNestApplication<NestExpressApplication>({
+				bodyParser: false,
+			});
+			configureApp(trusting, { trustedProxyHops: 1 });
+			await trusting.init();
+			try {
+				expect(await signInFromBehindProxy(trusting)).toBe("9.9.9.9");
+			} finally {
+				await trusting.close();
+			}
+		});
 	});
 
 	it("rejects a wrong password", async () => {

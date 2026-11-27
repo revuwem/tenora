@@ -14,6 +14,7 @@
 		"test:watch": "vitest"
 	},
 	"dependencies": {
+		"@tenora/contracts": "workspace:*",
 		"@tenora/tsconfig": "workspace:*",
 		"@tenora/ui": "workspace:*",
 		"next": "16.2.12",

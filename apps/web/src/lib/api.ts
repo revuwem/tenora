@@ -1,20 +1,14 @@
-/**
- * Full URL for an API path.
- *
- * - Browser: NEXT_PUBLIC_API_URL (inlined at build time). In Docker this is
- *   http://localhost:<API_PORT>, which differs per git worktree.
- * - Server (server components, route handlers): API_INTERNAL_URL when set (the Docker
- *   network address, e.g. http://api:8000), otherwise the public URL.
- */
-export function apiUrl(path = ""): string {
-	const base =
-		typeof window === "undefined"
-			? (process.env.API_INTERNAL_URL ?? process.env.NEXT_PUBLIC_API_URL)
-			: process.env.NEXT_PUBLIC_API_URL;
+import { cookies } from "next/headers";
+import { apiInternalUrl } from "./api-rewrites";
 
-	if (!base) {
-		throw new Error("NEXT_PUBLIC_API_URL is not set");
-	}
+/** The api's address for server components: the internal network, not the browser's `/api`. */
+export function apiUrl(path: string): string {
+	return `${apiInternalUrl()}/${path.replace(/^\//, "")}`;
+}
 
-	return `${base.replace(/\/$/, "")}/${path.replace(/^\//, "")}`;
+/** Calls the api as the signed-in user, forwarding their session cookie. Server components only. */
+export async function apiFetch(path: string, init: RequestInit = {}): Promise<Response> {
+	const headers = new Headers(init.headers);
+	headers.set("cookie", (await cookies()).toString());
+	return fetch(apiUrl(path), { ...init, headers, cache: "no-store" });
 }

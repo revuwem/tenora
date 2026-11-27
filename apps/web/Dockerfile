@@ -72,9 +72,11 @@ RUN --mount=type=cache,target=/root/.bun/install/cache \
 
 COPY --from=pruner /app/out/full/ .
 
-# NEXT_PUBLIC_* values are inlined into the client bundle at build time.
-ARG NEXT_PUBLIC_API_URL
-ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+# Next.js bakes the rewrite destinations into the build (the /api rewrite in next.config.ts
+# reads this), so the api's internal address is a build argument, not a run-time setting.
+# Keep the default in sync with API_INTERNAL_URL in the compose files.
+ARG API_INTERNAL_URL=http://api:8000
+ENV API_INTERNAL_URL=$API_INTERNAL_URL
 
 # Build only the web app (Next.js, standalone output). The cache mount keeps Next's
 # build cache between local builds; it is not part of the image.

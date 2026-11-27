@@ -49,6 +49,7 @@
       "name": "web",
       "version": "0.1.0",
       "dependencies": {
+        "@tenora/contracts": "workspace:*",
         "@tenora/tsconfig": "workspace:*",
         "@tenora/ui": "workspace:*",
         "next": "16.2.12",

@@ -110,8 +110,5 @@ jobs:
           file: apps/${{ matrix.app }}/Dockerfile
           push: false
           tags: tenora-${{ matrix.app }}:ci
-          # Only the web image reads it; matches docker-compose.prod.yml.
-          build-args: |
-            NEXT_PUBLIC_API_URL=http://localhost:8000
           cache-from: type=gha,scope=${{ matrix.app }}
           cache-to: type=gha,mode=max,scope=${{ matrix.app }}

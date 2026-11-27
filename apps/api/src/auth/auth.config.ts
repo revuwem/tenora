@@ -2,6 +2,7 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import type { Database } from "../db/db";
 import * as schema from "../db/schema";
+import { CLIENT_IP_HEADER } from "../common/client-ip";
 import { password } from "./password";
 
 export interface AuthSettings {
@@ -19,7 +20,11 @@ export function createAuth(db: Database, settings: AuthSettings) {
 		// Sessions are database records carried in an HttpOnly cookie: no cookie cache and
 		// no JWT, so removing a user takes effect immediately (ADR 0002).
 		session: { cookieCache: { enabled: false } },
-		advanced: { database: { generateId: "uuid" } },
+		advanced: {
+			database: { generateId: "uuid" },
+			// Only the header we set ourselves (overwriteClientIp), never one a client controls.
+			ipAddress: { ipAddressHeaders: [CLIENT_IP_HEADER] },
+		},
 		// Needed by @thallesp/nestjs-better-auth for its hook decorators.
 		hooks: {},
 	});

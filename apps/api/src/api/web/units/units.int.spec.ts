@@ -1,4 +1,5 @@
 import { INestApplication } from "@nestjs/common";
+import type { NestExpressApplication } from "@nestjs/platform-express";
 import { Test } from "@nestjs/testing";
 import { listUnitsResponseSchema, unitSchema } from "@tenora/contracts";
 import { randomUUID } from "node:crypto";
@@ -9,18 +10,20 @@ import {
 	seedTestOrganization,
 	seedTwoOrganizations,
 } from "../../../../test/support/seed-test-organization";
+import { configureApp } from "../../../app.setup";
 import { AppModule } from "../../../app.module";
 import type { Database } from "../../../db/db";
 import { DATABASE } from "../../../db/db.module";
 
 describe("Units API", () => {
-	let app: INestApplication;
+	let app: NestExpressApplication;
 	let server: ReturnType<INestApplication["getHttpServer"]>;
 	let db: Database;
 
 	beforeAll(async () => {
 		const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
-		app = moduleRef.createNestApplication({ bodyParser: false });
+		app = moduleRef.createNestApplication<NestExpressApplication>({ bodyParser: false });
+		configureApp(app);
 		await app.init();
 		server = app.getHttpServer();
 		db = app.get(DATABASE);
