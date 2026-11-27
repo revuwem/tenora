@@ -21,6 +21,7 @@ WORKDIR /app
 COPY package.json bun.lock ./
 COPY apps/api/package.json apps/api/package.json
 COPY apps/web/package.json apps/web/package.json
+COPY packages/contracts/package.json packages/contracts/package.json
 COPY packages/tsconfig/package.json packages/tsconfig/package.json
 COPY packages/ui/package.json packages/ui/package.json
 
@@ -104,8 +105,13 @@ WORKDIR /app/apps/api
 # Everything is root-owned and read-only for the unprivileged `node` user below.
 COPY --from=prod-deps /app/node_modules /app/node_modules
 COPY --from=prod-deps /app/apps/api/node_modules ./node_modules
+# Workspace packages the api imports at runtime (symlinked from node_modules).
+COPY --from=builder /app/packages/contracts/dist /app/packages/contracts/dist
+COPY --from=builder /app/packages/contracts/package.json /app/packages/contracts/package.json
 COPY --from=builder /app/apps/api/dist ./dist
 COPY --from=builder /app/apps/api/package.json ./package.json
+# SQL migrations, applied by `node dist/db/migrate.js` (a separate step, never on startup).
+COPY --from=builder /app/apps/api/drizzle ./drizzle
 
 ENV NODE_ENV=production
 ENV PORT=8000

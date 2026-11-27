@@ -22,6 +22,25 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
+    # Postgres for the migration step (and for the integration tests that follow it).
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: tenora
+          POSTGRES_PASSWORD: tenora
+          POSTGRES_DB: tenora
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U tenora -d tenora"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 30
+
+    env:
+      DATABASE_URL: postgres://tenora:tenora@localhost:5432/tenora
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -54,6 +73,11 @@ jobs:
           path: .turbo/cache
           key: turbo-${{ runner.os }}-${{ github.sha }}
           restore-keys: turbo-${{ runner.os }}-
+
+      # Proves the migrations apply to an empty database. Migrations are never run by
+      # the api on startup.
+      - name: Run database migrations
+        run: bun run --filter api db:migrate
 
       - name: Run checks
         run: bun run check

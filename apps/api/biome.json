@@ -1,5 +1,13 @@
 {
 	"extends": "//",
+	"files": {
+		"includes": ["**", "!drizzle"]
+	},
+	"javascript": {
+		"parser": {
+			"unsafeParameterDecoratorsEnabled": true
+		}
+	},
 	"linter": {
 		"rules": {
 			"style": {

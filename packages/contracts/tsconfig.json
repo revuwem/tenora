@@ -1,0 +1,4 @@
+{
+	"extends": "@tenora/tsconfig/node",
+	"include": ["src/**/*.ts", "*.mts"]
+}

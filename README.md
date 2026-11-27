@@ -4,7 +4,8 @@ Rental ops for small real estate businesses
 ## Structure
 
 - `apps/web` – Next.js frontend (http://localhost:3000)
-- `apps/api` – NestJS API (http://localhost:8000)
+- `apps/api` – NestJS API (http://localhost:8000), Postgres through Drizzle
+- `packages/contracts` – zod request/response schemas shared by api and web (`@tenora/contracts`)
 - `packages/ui` – shared shadcn/ui components and theme (`@tenora/ui`)
 - `packages/tsconfig` – shared TypeScript configs
 
@@ -28,6 +29,8 @@ bun run docker:dev:down
 
 **Calling the API from web:** use `apiUrl("/path")` from `apps/web/src/lib/api.ts`. The browser calls the api's published port (`NEXT_PUBLIC_API_URL`, `http://localhost:<API_PORT>`), server-side code uses the Docker network address (`API_INTERNAL_URL`). The api allows the web origin through `CORS_ORIGIN`. All three follow `WEB_PORT` / `API_PORT`, so they are correct per worktree. In the prod stack `NEXT_PUBLIC_API_URL` is baked in at image build, so rebuild if ports change.
 
+**Database:** the dev stack runs Postgres (not published to the host, so worktrees can't collide on its port). A one-shot `setup` service waits for it, builds `@tenora/contracts`, runs `db:migrate` and `db:seed`, and only then are the api and web started. The api never migrates on startup. Changing `packages/contracts` needs a `docker:dev` restart, because the api and web read its built output.
+
 Dependencies live inside the containers. After changing dependencies, run `bun run docker:dev` again; it rebuilds the image and recreates the `node_modules` volumes.
 
 ### Without Docker
@@ -37,6 +40,19 @@ bun install
 bun run dev
 ```
 
+### Database commands
+
+Run from `apps/api` (or `bun run --filter api <script>`), with `DATABASE_URL` set:
+
+| Script | What it does |
+| --- | --- |
+| `db:generate` | Generates a SQL migration in `apps/api/drizzle` from the schema in `src/domain/*/*.schema.ts` |
+| `db:migrate` | Applies pending migrations |
+| `db:seed` | Writes the seed rows directly; safe to run again |
+| `db:migrate:prod` | `db:migrate` for the built image (`node dist/db/migrate.js`) |
+
+In CI the same `db:migrate` runs against a Postgres service container.
+
 ## Running the production build locally
 
 ```bash
@@ -44,6 +60,8 @@ bun run docker:prod            # foreground
 bun run docker:prod:detached   # background
 bun run docker:prod:down       # stop
 ```
+
+The prod stack runs a one-shot `migrate` service before the api starts. It does not seed.
 
 Dev and prod stacks of the same checkout use the same ports, so run only one at a time.
 

@@ -1,9 +1,42 @@
 # Production-like stack: optimized builds, no source mounts.
 #   bun run docker:prod
 # No container_name: fixed names would collide across worktrees (see scripts/docker.sh).
+# Postgres is not published to the host. `migrate` is the explicit migration step: it runs
+# once, to completion, before the api starts. The api itself never migrates on startup.
+# The password default is for this local stack only; a real deploy must set its own.
 name: tenora-prod
 
+x-database-url: &database-url DATABASE_URL=postgres://tenora:${POSTGRES_PASSWORD:-tenora}@postgres:5432/tenora
+
 services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      - POSTGRES_USER=tenora
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-tenora}
+      - POSTGRES_DB=tenora
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tenora -d tenora"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    restart: unless-stopped
+
+  migrate:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    command: ["node", "dist/db/migrate.js"]
+    environment:
+      - NODE_ENV=production
+      - *database-url
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
   api:
     build:
       context: .
@@ -11,9 +44,13 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=8000
+      - *database-url
       - CORS_ORIGIN=http://localhost:${WEB_PORT:-3000}
     ports:
       - "${API_PORT:-8000}:8000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
     restart: unless-stopped
 
   web:
@@ -32,3 +69,6 @@ services:
     depends_on:
       - api
     restart: unless-stopped
+
+volumes:
+  postgres-data:

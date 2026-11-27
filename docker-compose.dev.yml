@@ -10,9 +10,58 @@
 # dependencies installed in the image are used instead of the host's macOS ones.
 # `-V` (used by the docker:dev script) recreates those volumes on every start,
 # so dependency changes always come from the freshly built image.
+#
+# Startup order: postgres (healthy) -> setup (builds contracts, migrates, seeds) -> api -> web.
+# Postgres is not published to the host, so worktree stacks can't collide on its port.
+# The api never migrates on startup: the one-shot `setup` service does it.
 name: tenora-dev
 
+x-api-dev: &api-dev
+  build:
+    context: .
+    dockerfile: apps/api/Dockerfile
+    target: dev
+  environment: &api-dev-env
+    - NODE_ENV=development
+    - PORT=8000
+    # Fake dev-only credentials; the database is only reachable on the compose network.
+    - DATABASE_URL=postgres://tenora:tenora@postgres:5432/tenora
+    - ORGANIZATION_NAME=${ORGANIZATION_NAME:-Demo Organization}
+  volumes: &api-dev-volumes
+    - .:/app
+    - /app/node_modules
+    - /app/apps/api/node_modules
+    - /app/packages/contracts/node_modules
+
 services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      - POSTGRES_USER=tenora
+      - POSTGRES_PASSWORD=tenora
+      - POSTGRES_DB=tenora
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tenora -d tenora"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  setup:
+    <<: *api-dev
+    working_dir: /app
+    command:
+      - sh
+      - -c
+      - >-
+        bun run --filter @tenora/contracts build
+        && cd apps/api && bun run db:migrate && bun run db:seed
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
   api:
     build:
       context: .
@@ -21,6 +70,7 @@ services:
     environment:
       - NODE_ENV=development
       - PORT=8000
+      - DATABASE_URL=postgres://tenora:tenora@postgres:5432/tenora
       # Browser origin allowed to call the api (the web app's published port).
       - CORS_ORIGIN=http://localhost:${WEB_PORT:-3000}
       # Poll for changes: file events don't always cross the macOS bind mount.
@@ -33,6 +83,10 @@ services:
       - .:/app
       - /app/node_modules
       - /app/apps/api/node_modules
+      - /app/packages/contracts/node_modules
+    depends_on:
+      setup:
+        condition: service_completed_successfully
 
   web:
     build:
@@ -55,6 +109,10 @@ services:
       - /app/node_modules
       - /app/apps/web/node_modules
       - /app/packages/ui/node_modules
+      - /app/packages/contracts/node_modules
       - /app/apps/web/.next
     depends_on:
       - api
+
+volumes:
+  postgres-data:
