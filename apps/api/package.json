@@ -19,6 +19,7 @@
 		"check": "bun run lint && bun run type-check && bun run test",
 		"test:watch": "vitest",
 		"test:e2e": "vitest run --config vitest.config.e2e.mts",
+		"auth:generate": "bunx @better-auth/cli@1.4.21 generate --config auth.cli.ts --output src/auth/auth.schema.ts -y && biome format --write src/auth/auth.schema.ts",
 		"db:generate": "drizzle-kit generate",
 		"db:migrate": "bun src/db/migrate.ts",
 		"db:seed": "bun src/db/seed.ts"
@@ -29,6 +30,8 @@
 		"@nestjs/platform-express": "^11.0.1",
 		"@tenora/contracts": "workspace:*",
 		"@tenora/tsconfig": "workspace:*",
+		"@thallesp/nestjs-better-auth": "^2.8.0",
+		"better-auth": "^1.7.28",
 		"drizzle-orm": "^0.45.4",
 		"pg": "^8.23.1",
 		"reflect-metadata": "^0.2.2",
