@@ -29,9 +29,10 @@ export class UnitsRepository {
 	}
 
 	async create(organizationId: string, input: CreateUnitRequest): Promise<Unit> {
+		// organizationId last, so nothing in `input` can ever override it.
 		const [unit] = await this.db
 			.insert(units)
-			.values({ organizationId, ...input })
+			.values({ ...input, organizationId })
 			.returning(columns);
 		return unit;
 	}

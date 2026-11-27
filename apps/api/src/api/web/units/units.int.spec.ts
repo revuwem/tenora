@@ -73,6 +73,7 @@ describe("Units API", () => {
 			["a missing name", { address: "12 Rustaveli Ave" }],
 			["a missing address", { name: "Flat 4" }],
 			["a blank name", { name: "  ", address: "12 Rustaveli Ave" }],
+			["an empty body", {}],
 		])("rejects %s with 400", async (_label, body) => {
 			const admin = await seedTestOrganization(db);
 			const cookie = await signInCookie(server, admin.adminEmail, admin.adminPassword);

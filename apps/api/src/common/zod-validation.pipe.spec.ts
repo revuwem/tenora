@@ -11,14 +11,17 @@ describe("ZodValidationPipe", () => {
 	});
 
 	it("answers 400 listing what is wrong", () => {
-		expect(() => pipe.transform({ name: "" })).toThrow(BadRequestException);
+		let thrown: unknown;
 		try {
 			pipe.transform({});
 		} catch (error) {
-			expect((error as BadRequestException).getResponse()).toMatchObject({
-				message: "Validation failed",
-				issues: [{ path: "name" }],
-			});
+			thrown = error;
 		}
+
+		expect(thrown).toBeInstanceOf(BadRequestException);
+		expect((thrown as BadRequestException).getResponse()).toMatchObject({
+			message: "Validation failed",
+			issues: [{ path: "name" }],
+		});
 	});
 });
