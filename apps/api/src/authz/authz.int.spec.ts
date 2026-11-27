@@ -1,4 +1,5 @@
 import { Body, Controller, Get, INestApplication, Post } from "@nestjs/common";
+import type { NestExpressApplication } from "@nestjs/platform-express";
 import { Test } from "@nestjs/testing";
 import { meResponseSchema } from "@tenora/contracts";
 import { eq } from "drizzle-orm";
@@ -10,6 +11,7 @@ import {
 	seedTestOrganization,
 	seedTwoOrganizations,
 } from "../../test/support/seed-test-organization";
+import { configureApp } from "../app.setup";
 import { AppModule } from "../app.module";
 import type { Database } from "../db/db";
 import { DATABASE } from "../db/db.module";
@@ -43,7 +45,7 @@ class GuardedRoutes {
 }
 
 describe("access control", () => {
-	let app: INestApplication;
+	let app: NestExpressApplication;
 	let server: ReturnType<INestApplication["getHttpServer"]>;
 	let db: Database;
 
@@ -52,7 +54,8 @@ describe("access control", () => {
 			imports: [AppModule],
 			controllers: [GuardedRoutes],
 		}).compile();
-		app = moduleRef.createNestApplication({ bodyParser: false });
+		app = moduleRef.createNestApplication<NestExpressApplication>({ bodyParser: false });
+		configureApp(app);
 		await app.init();
 		server = app.getHttpServer();
 		db = app.get(DATABASE);

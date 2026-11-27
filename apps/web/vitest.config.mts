@@ -6,6 +6,8 @@ import { defineConfig } from "vitest/config";
 // *.spec.tsx: component tests in a real Chromium. *.spec.ts: plain logic tests in Node.
 export default defineConfig({
 	plugins: [react()],
+	// @tenora/contracts is built to CommonJS: pre-bundle it so the browser tests can import it.
+	optimizeDeps: { include: ["@tenora/contracts"] },
 	resolve: {
 		alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) },
 	},
