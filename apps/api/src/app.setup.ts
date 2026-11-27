@@ -12,6 +12,16 @@ export interface AppSettings {
 	trustedProxyHops?: number;
 }
 
+/** Reads TRUST_PROXY_HOPS: a whole number, 0 when unset. A typo fails at startup, not silently. */
+export function parseTrustedProxyHops(value: string | undefined): number {
+	if (value === undefined || value === "") return 0;
+	const hops = Number(value);
+	if (!Number.isInteger(hops) || hops < 0) {
+		throw new Error(`TRUST_PROXY_HOPS must be a whole number of 0 or more, got "${value}"`);
+	}
+	return hops;
+}
+
 /**
  * Settings shared by the real app (main.ts) and the tests, so tests run the app as it is run.
  * Create the app with `bodyParser: false`: Better Auth reads the raw body of its own routes and

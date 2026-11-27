@@ -74,6 +74,7 @@ COPY --from=pruner /app/out/full/ .
 
 # Next.js bakes the rewrite destinations into the build (the /api rewrite in next.config.ts
 # reads this), so the api's internal address is a build argument, not a run-time setting.
+# Keep the default in sync with API_INTERNAL_URL in the compose files.
 ARG API_INTERNAL_URL=http://api:8000
 ENV API_INTERNAL_URL=$API_INTERNAL_URL
 

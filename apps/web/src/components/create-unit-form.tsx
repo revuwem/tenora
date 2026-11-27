@@ -2,13 +2,15 @@
 
 import { createUnitRequestSchema } from "@tenora/contracts";
 import { Button } from "@tenora/ui/components/ui/button";
-import { Input } from "@tenora/ui/components/ui/input";
 import { useRouter } from "next/navigation";
-import { type FormEvent, useId, useState } from "react";
+import { type FormEvent, useState } from "react";
+import { postJson } from "@/lib/post-json";
+import { FormField } from "./form-field";
+
+const missingFieldMessage = { name: "A Unit needs a name.", address: "A Unit needs an address." };
 
 export function CreateUnitForm() {
 	const router = useRouter();
-	const id = useId();
 	const [error, setError] = useState<string | null>(null);
 	const [pending, setPending] = useState(false);
 
@@ -22,18 +24,15 @@ export function CreateUnitForm() {
 			buildingLabel: data.get("buildingLabel"),
 		});
 		if (!parsed.success) {
-			setError("A Unit needs a name and an address.");
+			const field = parsed.error.issues[0]?.path[0];
+			setError(field === "address" ? missingFieldMessage.address : missingFieldMessage.name);
 			return;
 		}
 
 		setPending(true);
 		setError(null);
 		try {
-			const response = await fetch("/api/units", {
-				method: "POST",
-				headers: { "content-type": "application/json" },
-				body: JSON.stringify(parsed.data),
-			});
+			const response = await postJson("/api/units", parsed.data);
 			if (!response.ok) {
 				setError("The Unit could not be created. Try again.");
 				return;
@@ -50,18 +49,9 @@ export function CreateUnitForm() {
 	return (
 		<form onSubmit={onSubmit} className="flex flex-col gap-4">
 			<h2 className="text-lg font-semibold">Add a Unit</h2>
-			<div className="flex flex-col gap-1.5 text-sm font-medium">
-				<label htmlFor={`${id}-name`}>Name</label>
-				<Input id={`${id}-name`} name="name" placeholder="Flat 4" />
-			</div>
-			<div className="flex flex-col gap-1.5 text-sm font-medium">
-				<label htmlFor={`${id}-address`}>Address</label>
-				<Input id={`${id}-address`} name="address" placeholder="12 Rustaveli Ave" />
-			</div>
-			<div className="flex flex-col gap-1.5 text-sm font-medium">
-				<label htmlFor={`${id}-buildingLabel`}>Building (optional)</label>
-				<Input id={`${id}-buildingLabel`} name="buildingLabel" placeholder="Block B" />
-			</div>
+			<FormField label="Name" name="name" placeholder="Flat 4" />
+			<FormField label="Address" name="address" placeholder="12 Rustaveli Ave" />
+			<FormField label="Building (optional)" name="buildingLabel" placeholder="Block B" />
 			{error && (
 				<p role="alert" className="text-sm text-destructive">
 					{error}

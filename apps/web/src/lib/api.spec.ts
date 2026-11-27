@@ -35,12 +35,13 @@ describe("apiFetch", () => {
 	});
 
 	it("calls the api with the user's cookie and without caching", async () => {
-		await apiFetch("/units", { method: "GET" });
+		await apiFetch("/units", { method: "GET", headers: [["accept", "application/json"]] });
 
-		expect(fetchMock).toHaveBeenCalledWith("http://api:8000/units", {
-			method: "GET",
-			headers: { cookie: "better-auth.session_token=abc" },
-			cache: "no-store",
-		});
+		const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
+		expect(url).toBe("http://api:8000/units");
+		expect(init).toMatchObject({ method: "GET", cache: "no-store" });
+		const headers = init.headers as Headers;
+		expect(headers.get("cookie")).toBe("better-auth.session_token=abc");
+		expect(headers.get("accept")).toBe("application/json");
 	});
 });

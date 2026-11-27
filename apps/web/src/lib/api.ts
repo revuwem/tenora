@@ -8,10 +8,7 @@ export function apiUrl(path: string): string {
 
 /** Calls the api as the signed-in user, forwarding their session cookie. Server components only. */
 export async function apiFetch(path: string, init: RequestInit = {}): Promise<Response> {
-	const cookie = (await cookies()).toString();
-	return fetch(apiUrl(path), {
-		...init,
-		headers: { ...init.headers, cookie },
-		cache: "no-store",
-	});
+	const headers = new Headers(init.headers);
+	headers.set("cookie", (await cookies()).toString());
+	return fetch(apiUrl(path), { ...init, headers, cache: "no-store" });
 }

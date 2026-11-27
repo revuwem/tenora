@@ -20,6 +20,10 @@ describe("apiInternalUrl", () => {
 describe("apiRewrites", () => {
 	const rewrites = apiRewrites("http://api:8000");
 
+	it("checks the auth rewrite first, so /api/auth is not swallowed by the general one", () => {
+		expect(rewrites.map((rewrite) => rewrite.source)).toEqual(["/api/auth/:path*", "/api/:path*"]);
+	});
+
 	it("sends Better Auth's routes to the same path on the api", () => {
 		expect(rewrites[0]).toEqual({
 			source: "/api/auth/:path*",
@@ -29,9 +33,5 @@ describe("apiRewrites", () => {
 
 	it("sends every other /api route to the api without the prefix", () => {
 		expect(rewrites[1]).toEqual({ source: "/api/:path*", destination: "http://api:8000/:path*" });
-	});
-
-	it("checks the auth rewrite first, so /api/auth is not swallowed by the general one", () => {
-		expect(rewrites.map((rewrite) => rewrite.source)).toEqual(["/api/auth/:path*", "/api/:path*"]);
 	});
 });

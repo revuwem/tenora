@@ -49,8 +49,7 @@ services:
       # Required: at least 32 random characters, e.g. `openssl rand -base64 32`.
       - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET:?set BETTER_AUTH_SECRET}
       - BETTER_AUTH_URL=http://localhost:${WEB_PORT:-3000}
-    ports:
-      - "${API_PORT:-8000}:8000"
+    # Not published: the browser reaches the api only through the web app's /api rewrite.
     depends_on:
       migrate:
         condition: service_completed_successfully

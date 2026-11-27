@@ -58,9 +58,7 @@ describe("CreateUnitForm", () => {
 		await screen.getByLabelText("Name").fill("Flat 4");
 		await screen.getByRole("button", { name: "Add Unit" }).click();
 
-		await expect
-			.element(screen.getByRole("alert"))
-			.toHaveTextContent("A Unit needs a name and an address.");
+		await expect.element(screen.getByRole("alert")).toHaveTextContent("A Unit needs an address.");
 		expect(fetchMock).not.toHaveBeenCalled();
 	});
 

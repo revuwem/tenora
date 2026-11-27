@@ -1,13 +1,13 @@
 "use client";
 
 import { Button } from "@tenora/ui/components/ui/button";
-import { Input } from "@tenora/ui/components/ui/input";
 import { useRouter } from "next/navigation";
-import { type FormEvent, useId, useState } from "react";
+import { type FormEvent, useState } from "react";
+import { postJson } from "@/lib/post-json";
+import { FormField } from "./form-field";
 
 export function SignInForm() {
 	const router = useRouter();
-	const id = useId();
 	const [error, setError] = useState<string | null>(null);
 	const [pending, setPending] = useState(false);
 
@@ -17,10 +17,9 @@ export function SignInForm() {
 		setPending(true);
 		setError(null);
 		try {
-			const response = await fetch("/api/auth/sign-in/email", {
-				method: "POST",
-				headers: { "content-type": "application/json" },
-				body: JSON.stringify({ email: data.get("email"), password: data.get("password") }),
+			const response = await postJson("/api/auth/sign-in/email", {
+				email: data.get("email"),
+				password: data.get("password"),
 			});
 			if (!response.ok) {
 				setError("Wrong email or password.");
@@ -37,20 +36,14 @@ export function SignInForm() {
 
 	return (
 		<form onSubmit={onSubmit} className="flex w-full max-w-sm flex-col gap-4">
-			<div className="flex flex-col gap-1.5 text-sm font-medium">
-				<label htmlFor={`${id}-email`}>Email</label>
-				<Input id={`${id}-email`} name="email" type="email" autoComplete="email" required />
-			</div>
-			<div className="flex flex-col gap-1.5 text-sm font-medium">
-				<label htmlFor={`${id}-password`}>Password</label>
-				<Input
-					id={`${id}-password`}
-					name="password"
-					type="password"
-					autoComplete="current-password"
-					required
-				/>
-			</div>
+			<FormField label="Email" name="email" type="email" autoComplete="email" required />
+			<FormField
+				label="Password"
+				name="password"
+				type="password"
+				autoComplete="current-password"
+				required
+			/>
 			{error && (
 				<p role="alert" className="text-sm text-destructive">
 					{error}

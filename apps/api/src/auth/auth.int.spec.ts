@@ -28,6 +28,16 @@ class WhoAmIController {
 	}
 }
 
+// Test-only route: what the rest of the api would be told about the client's address.
+@Controller("test")
+class ClientIpEcho {
+	@Get("client-ip")
+	@Public()
+	clientIp(@Req() request: { headers: Record<string, string> }) {
+		return { clientIp: request.headers[CLIENT_IP_HEADER] };
+	}
+}
+
 describe("sign-up and sign-in", () => {
 	let app: NestExpressApplication;
 	let server: ReturnType<INestApplication["getHttpServer"]>;
@@ -36,7 +46,7 @@ describe("sign-up and sign-in", () => {
 	beforeAll(async () => {
 		const moduleRef = await Test.createTestingModule({
 			imports: [AppModule, AuthModule],
-			controllers: [WhoAmIController],
+			controllers: [WhoAmIController, ClientIpEcho],
 		}).compile();
 		app = moduleRef.createNestApplication<NestExpressApplication>({ bodyParser: false });
 		configureApp(app);
@@ -97,8 +107,13 @@ describe("sign-up and sign-in", () => {
 		};
 
 		it("ignores every address the client wrote, by default", async () => {
-			// Better Auth reports localhost when it has no address and NODE_ENV is "test", so
-			// this fails only if one of the client's own values got through.
+			const echoed = await request(server)
+				.get("/test/client-ip")
+				.set("X-Forwarded-For", "1.2.3.4, 9.9.9.9")
+				.set(CLIENT_IP_HEADER, "6.6.6.6");
+
+			// The socket's own address (this test client connects from localhost).
+			expect(echoed.body.clientIp).toMatch(/(^|:)127\.0\.0\.1$/);
 			expect(await signInFromBehindProxy(app)).toBe("127.0.0.1");
 		});
 

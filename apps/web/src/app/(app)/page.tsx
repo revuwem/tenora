@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { getMe } from "@/lib/me";
+import { can } from "@/lib/permissions";
 
 export default async function Home() {
 	const result = await getMe();
-	const canViewUnits = result.status === "ok" && result.me.permissions.includes("units:view");
+	const canViewUnits = result.status === "ok" && can(result.me, "units:view");
 
 	return (
 		<div className="mx-auto flex max-w-3xl flex-col gap-4">
