@@ -1,6 +1,7 @@
 import { and, eq } from "drizzle-orm";
 import { account, user } from "../auth/auth.schema";
 import { password } from "../auth/password";
+import { memberships } from "../authz/membership.schema";
 import { organizations } from "../domain/organizations/organization.schema";
 import type { Database } from "./db";
 
@@ -12,7 +13,7 @@ export interface SeedInput {
 }
 
 /**
- * Writes an Organization and its Admin straight into the tables, calling no API. Safe to run
+ * Writes an Organization, its Admin and the Admin's membership straight into the tables, calling no API. Safe to run
  * again: anything already there is left as it is (an existing Admin keeps their password).
  */
 export async function seedOrganizationAdmin(db: Database, input: SeedInput) {
@@ -59,6 +60,12 @@ export async function seedOrganizationAdmin(db: Database, input: SeedInput) {
 				password: await password.hash(input.adminPassword),
 			});
 		}
+
+		// One Organization per user (unique user_id): an existing membership stays as it is.
+		await tx
+			.insert(memberships)
+			.values({ userId, organizationId, role: "admin" })
+			.onConflictDoNothing({ target: memberships.userId });
 
 		return { organizationId, userId };
 	});

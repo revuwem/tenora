@@ -15,6 +15,13 @@
       "when": 1795810035577,
       "tag": "0001_chilly_mattie_franklin",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1795810695636,
+      "tag": "0002_lethal_siren",
+      "breakpoints": true
     }
   ]
 }
