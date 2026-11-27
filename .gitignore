@@ -3,6 +3,8 @@ node_modules
 .next
 dist
 coverage
+# Vitest browser mode: failure screenshots
+.vitest
 
 # Environment
 .env

@@ -6,6 +6,8 @@ describe("apiUrl", () => {
 		vi.unstubAllEnvs();
 		vi.stubEnv("NEXT_PUBLIC_API_URL", "http://localhost:8000");
 		vi.stubEnv("API_INTERNAL_URL", "");
+		// This project runs in Node, so pretend to be a browser unless a test says otherwise.
+		vi.stubGlobal("window", {});
 	});
 
 	afterEach(() => {
