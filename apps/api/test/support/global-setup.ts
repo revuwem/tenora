@@ -12,15 +12,15 @@ import { Client, Pool } from "pg";
 //    publishing from the dev stack and parallel worktrees don't collide. Needs Docker.
 //
 // Either way this creates `tenora_test_<random>`, migrates it, points DATABASE_URL at it, and
-// drops it afterwards. Test files add their own data with unique values, so they never clash.
+// drops it afterwards. When setup fails part way it cleans up after itself, because Vitest
+// does not call teardown then. Test files add their own data with unique values, so they never clash.
 
 const docker = (...args: string[]) => execFileSync("docker", args, { encoding: "utf8" }).trim();
 
-// Postgres logs to stderr, which `docker logs` passes through.
-const dockerLogs = (id: string) => {
-	const { stdout, stderr } = spawnSync("docker", ["logs", id], { encoding: "utf8" });
-	return stdout + stderr;
-};
+// While the image runs its init scripts it listens on a unix socket only, so a TCP check
+// from inside the container is true only once the real server is up.
+const isReady = (id: string) =>
+	spawnSync("docker", ["exec", id, "pg_isready", "-h", "127.0.0.1", "-U", "postgres"]).status === 0;
 
 let containerId: string | undefined;
 let serverUrl: string;
@@ -65,40 +65,53 @@ async function startContainer() {
 	}
 	const port = docker("port", containerId, "5432/tcp").split(":").pop();
 	const url = `postgres://postgres:test@127.0.0.1:${port}/postgres`;
-	// The image starts a temporary server for its init scripts, then restarts: wait for the
-	// second "ready" line.
 	for (let attempt = 0; attempt < 60; attempt++) {
-		const ready = dockerLogs(containerId).split("ready to accept connections").length - 1;
-		if (ready >= 2 && (await canConnect(url))) return url;
+		if (isReady(containerId) && (await canConnect(url))) return url;
 		await new Promise((resolve) => setTimeout(resolve, 500));
 	}
 	docker("stop", containerId);
 	throw new Error("The test Postgres container did not become ready in 30 seconds");
 }
 
-export async function setup() {
-	serverUrl = process.env.TEST_DATABASE_URL ?? (await startContainer());
-
-	const admin = new Client({ connectionString: serverUrl });
-	await admin.connect();
-	await admin.query(`create database "${databaseName}"`);
-	await admin.end();
-
-	const databaseUrl = withDatabase(serverUrl, databaseName);
-	const pool = new Pool({ connectionString: databaseUrl });
-	await migrate(drizzle(pool), { migrationsFolder: join(__dirname, "../../drizzle") });
-	await pool.end();
-
-	process.env.DATABASE_URL = databaseUrl;
-}
-
-export async function teardown() {
+async function cleanUp() {
 	if (containerId) {
 		docker("stop", containerId);
 		return;
 	}
 	const admin = new Client({ connectionString: serverUrl });
-	await admin.connect();
-	await admin.query(`drop database if exists "${databaseName}" with (force)`);
-	await admin.end();
+	try {
+		await admin.connect();
+		await admin.query(`drop database if exists "${databaseName}" with (force)`);
+	} finally {
+		await admin.end().catch(() => {});
+	}
 }
+
+export async function setup() {
+	serverUrl = process.env.TEST_DATABASE_URL ?? (await startContainer());
+	try {
+		const admin = new Client({ connectionString: serverUrl });
+		await admin.connect();
+		try {
+			await admin.query(`create database "${databaseName}"`);
+		} finally {
+			await admin.end();
+		}
+
+		const databaseUrl = withDatabase(serverUrl, databaseName);
+		const pool = new Pool({ connectionString: databaseUrl });
+		try {
+			await migrate(drizzle(pool), { migrationsFolder: join(__dirname, "../../drizzle") });
+		} finally {
+			await pool.end();
+		}
+
+		// Inherited by the test workers, which start after this.
+		process.env.DATABASE_URL = databaseUrl;
+	} catch (error) {
+		await cleanUp().catch(() => {});
+		throw error;
+	}
+}
+
+export const teardown = cleanUp;

@@ -23,7 +23,7 @@ jobs:
     timeout-minutes: 15
 
     # Postgres for the migration step and the integration tests. Keep the image, credentials and healthcheck in sync
-    # with docker-compose.dev.yml and docker-compose.prod.yml.
+    # with docker-compose.dev.yml, docker-compose.prod.yml and apps/api/test/support/global-setup.ts.
     services:
       postgres:
         image: postgres:17-alpine

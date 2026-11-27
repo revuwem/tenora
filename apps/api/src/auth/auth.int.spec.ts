@@ -46,6 +46,11 @@ describe("sign-up and sign-in", () => {
 		return { name: "Someone", email: `user-${unique}@example.test`, password: `pw-${unique}` };
 	};
 
+	const signUp = (user: { name: string; email: string; password: string }) =>
+		request(server).post("/api/auth/sign-up/email").send(user);
+	const signIn = (email: string, password: string) =>
+		request(server).post("/api/auth/sign-in/email").send({ email, password });
+
 	const sessionCookieHeaders = (response: request.Response) =>
 		response.headers["set-cookie"] as unknown as string[];
 	const sessionCookie = (response: request.Response) =>
@@ -54,52 +59,37 @@ describe("sign-up and sign-in", () => {
 			.join("; ");
 
 	it("lets a new user sign up and then sign in", async () => {
-		const { name, email, password } = credentials();
+		const user = credentials();
 
-		const signUp = await request(server)
-			.post("/api/auth/sign-up/email")
-			.send({ name, email, password });
-		expect(signUp.status).toBe(200);
-		expect(signUp.body.user.email).toBe(email);
+		const signedUp = await signUp(user);
+		expect(signedUp.status).toBe(200);
+		expect(signedUp.body.user.email).toBe(user.email);
 
-		const signIn = await request(server).post("/api/auth/sign-in/email").send({ email, password });
-		expect(signIn.status).toBe(200);
-		expect(signIn.body.user.email).toBe(email);
-		expect(sessionCookieHeaders(signIn).join(";")).toMatch(/HttpOnly/i);
+		const signedIn = await signIn(user.email, user.password);
+		expect(signedIn.status).toBe(200);
+		expect(signedIn.body.user.email).toBe(user.email);
+		expect(sessionCookieHeaders(signedIn).join(";")).toMatch(/HttpOnly/i);
 	});
 
 	it("rejects a wrong password", async () => {
-		const { name, email, password } = credentials();
-		await request(server).post("/api/auth/sign-up/email").send({ name, email, password });
+		const user = credentials();
+		await signUp(user);
 
-		const signIn = await request(server)
-			.post("/api/auth/sign-in/email")
-			.send({ email, password: `${password}-wrong` });
-		expect(signIn.status).toBe(401);
-		expect(signIn.headers["set-cookie"]).toBeUndefined();
+		const signedIn = await signIn(user.email, `${user.password}-wrong`);
+		expect(signedIn.status).toBe(401);
+		expect(signedIn.headers["set-cookie"]).toBeUndefined();
 	});
 
 	it("tells the rest of the api who is signed in, and nobody without a session", async () => {
-		const { name, email, password } = credentials();
-		await request(server).post("/api/auth/sign-up/email").send({ name, email, password });
-		const signIn = await request(server).post("/api/auth/sign-in/email").send({ email, password });
+		const admin = await seedTestOrganization(db);
+		const signedIn = await signIn(admin.adminEmail, admin.adminPassword);
 
 		const withSession = await request(server)
 			.get("/test/who-am-i")
-			.set("Cookie", sessionCookie(signIn));
-		expect(withSession.body).toMatchObject({ email, name });
+			.set("Cookie", sessionCookie(signedIn));
+		expect(withSession.body).toMatchObject({ id: admin.adminId, email: admin.adminEmail });
 
 		const withoutSession = await request(server).get("/test/who-am-i");
 		expect(withoutSession.body).toEqual({ user: null });
-	});
-
-	it("signs in a user written by the seed function", async () => {
-		const organization = await seedTestOrganization(db);
-
-		const signIn = await request(server)
-			.post("/api/auth/sign-in/email")
-			.send({ email: organization.adminEmail, password: organization.adminPassword });
-		expect(signIn.status).toBe(200);
-		expect(signIn.body.user.id).toBe(organization.adminId);
 	});
 });

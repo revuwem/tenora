@@ -40,7 +40,7 @@ bun install
 bun run dev
 ```
 
-**Sign-in:** Better Auth serves `/api/auth/*` from the api (email and password, sessions in the database, HttpOnly cookie). In the dev stack the seed creates the Admin `admin@example.com` with password `dev-admin-password` (override with `ADMIN_EMAIL` / `ADMIN_PASSWORD` in your shell). Outside Docker, copy `apps/api/.env.example` to `apps/api/.env`. The prod stack needs `BETTER_AUTH_SECRET` (at least 32 random characters) in the environment. `bun run --filter api auth:generate` regenerates Better Auth's tables in `src/auth/auth.schema.ts` after its options change; then run `db:generate`.
+**Sign-in:** Better Auth serves `/api/auth/*` from the api (email and password, sessions in the database, HttpOnly cookie). In the dev stack the seed creates the Admin `admin@example.com` with password `dev-admin-password` (override with `ADMIN_EMAIL` / `ADMIN_PASSWORD` in your shell). Outside Docker, copy `apps/api/.env.example` to `apps/api/.env`; Bun loads it for the `db:*` scripts and `bun run dev`. The prod stack needs `BETTER_AUTH_SECRET` (at least 32 random characters) in the environment. `bun run --filter api auth:generate` regenerates Better Auth's tables in `src/auth/auth.schema.ts` after its options change; then run `db:generate`.
 
 ### Database commands
 
@@ -59,6 +59,8 @@ The prod stack runs a one-shot `migrate` service before the api starts. It does 
 Dev and prod stacks of the same checkout use the same ports, so run only one at a time.
 
 ## Checks
+
+`bun run check` runs the api integration tests, so Docker must be running (or set `TEST_DATABASE_URL` to a Postgres server). The Stop hook runs it too.
 
 ```bash
 bun run check        # lint, type-check, format, test

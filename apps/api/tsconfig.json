@@ -21,6 +21,6 @@
 		"strictBindCallApply": false,
 		"noFallthroughCasesInSwitch": false
 	},
-	"include": ["src/**/*.ts", "test/**/*.ts", "*.mts"],
+	"include": ["src/**/*.ts", "test/**/*.ts", "*.ts", "*.mts"],
 	"exclude": ["node_modules", "dist"]
 }
