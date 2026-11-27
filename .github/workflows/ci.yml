@@ -22,7 +22,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
-    # Postgres for the migration step (and for the integration tests that follow it).
+    # Postgres for the migration step. Keep the image, credentials and healthcheck in sync
+    # with docker-compose.dev.yml and docker-compose.prod.yml.
     services:
       postgres:
         image: postgres:17-alpine

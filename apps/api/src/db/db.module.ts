@@ -1,31 +1,30 @@
 import { Global, Inject, Module, OnModuleDestroy } from "@nestjs/common";
-import type { Pool } from "pg";
 import { requireEnv } from "../common/env";
-import { createDatabase } from "./db";
+import { createDatabase, type DatabaseHandle } from "./db";
 
 export const DATABASE = Symbol("DATABASE");
-const POOL = Symbol("POOL");
+const DATABASE_HANDLE = Symbol("DATABASE_HANDLE");
 
 /** Provides the Drizzle client. Repositories are the only code that should inject it. */
 @Global()
 @Module({
 	providers: [
 		{
-			provide: POOL,
+			provide: DATABASE_HANDLE,
 			useFactory: () => createDatabase(requireEnv("DATABASE_URL")),
 		},
 		{
 			provide: DATABASE,
-			inject: [POOL],
-			useFactory: (database: ReturnType<typeof createDatabase>) => database.db,
+			inject: [DATABASE_HANDLE],
+			useFactory: (handle: DatabaseHandle) => handle.db,
 		},
 	],
 	exports: [DATABASE],
 })
 export class DbModule implements OnModuleDestroy {
-	constructor(@Inject(POOL) private readonly database: { pool: Pool }) {}
+	constructor(@Inject(DATABASE_HANDLE) private readonly handle: DatabaseHandle) {}
 
 	async onModuleDestroy() {
-		await this.database.pool.end();
+		await this.handle.pool.end();
 	}
 }

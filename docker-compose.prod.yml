@@ -9,6 +9,7 @@ name: tenora-prod
 x-database-url: &database-url DATABASE_URL=postgres://tenora:${POSTGRES_PASSWORD:-tenora}@postgres:5432/tenora
 
 services:
+  # Keep the image, credentials and healthcheck in sync with the dev stack and ci.yml.
   postgres:
     image: postgres:17-alpine
     environment:

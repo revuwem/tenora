@@ -21,19 +21,20 @@ x-api-dev: &api-dev
     context: .
     dockerfile: apps/api/Dockerfile
     target: dev
-  environment: &api-dev-env
+  environment:
     - NODE_ENV=development
     - PORT=8000
     # Fake dev-only credentials; the database is only reachable on the compose network.
     - DATABASE_URL=postgres://tenora:tenora@postgres:5432/tenora
     - ORGANIZATION_NAME=${ORGANIZATION_NAME:-Demo Organization}
-  volumes: &api-dev-volumes
+  volumes:
     - .:/app
     - /app/node_modules
     - /app/apps/api/node_modules
     - /app/packages/contracts/node_modules
 
 services:
+  # Keep the image, credentials and healthcheck in sync with the prod stack and ci.yml.
   postgres:
     image: postgres:17-alpine
     environment:
@@ -63,10 +64,7 @@ services:
     restart: "no"
 
   api:
-    build:
-      context: .
-      dockerfile: apps/api/Dockerfile
-      target: dev
+    <<: *api-dev
     environment:
       - NODE_ENV=development
       - PORT=8000
@@ -79,11 +77,6 @@ services:
       - TSC_WATCHDIRECTORY=FixedPollingInterval
     ports:
       - "${API_PORT:-8000}:8000"
-    volumes:
-      - .:/app
-      - /app/node_modules
-      - /app/apps/api/node_modules
-      - /app/packages/contracts/node_modules
     depends_on:
       setup:
         condition: service_completed_successfully
@@ -109,7 +102,6 @@ services:
       - /app/node_modules
       - /app/apps/web/node_modules
       - /app/packages/ui/node_modules
-      - /app/packages/contracts/node_modules
       - /app/apps/web/.next
     depends_on:
       - api
