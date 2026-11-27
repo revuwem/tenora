@@ -5,11 +5,11 @@ import request from "supertest";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { seedTestOrganization } from "../../test/support/seed-test-organization";
 import { AppModule } from "../app.module";
+import { Public } from "../authz/authz.decorators";
 import { AuthModule } from "./auth.module";
 import type { Database } from "../db/db";
 import { DATABASE } from "../db/db.module";
 import { CurrentUserService } from "./current-user.service";
-import { Public } from "./public";
 
 // Test-only route, to see what the rest of the api would learn from a request.
 @Controller("test")

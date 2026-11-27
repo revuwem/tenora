@@ -8,8 +8,7 @@ import {
 import { Reflector } from "@nestjs/core";
 import type { Permission } from "@tenora/contracts";
 import { CurrentUserService } from "../auth/current-user.service";
-import { isPublicRoute } from "../auth/public";
-import { ANY_MEMBER_KEY, PERMISSION_KEY } from "./authz.decorators";
+import { ANY_MEMBER_KEY, PERMISSION_KEY, PUBLIC_KEY } from "./authz.decorators";
 import { AuthzService } from "./authz.service";
 import { MembershipsRepository } from "./memberships.repository";
 
@@ -28,9 +27,9 @@ export class AuthzGuard implements CanActivate {
 	) {}
 
 	async canActivate(context: ExecutionContext): Promise<boolean> {
-		if (isPublicRoute(this.reflector, context)) return true;
-
 		const targets = [context.getHandler(), context.getClass()];
+		if (this.reflector.getAllAndOverride<boolean | undefined>(PUBLIC_KEY, targets)) return true;
+
 		const permission = this.reflector.getAllAndOverride<Permission | undefined>(
 			PERMISSION_KEY,
 			targets,

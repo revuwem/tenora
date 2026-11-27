@@ -1,4 +1,4 @@
-import { Controller, ForbiddenException, Get, INestApplication, Param } from "@nestjs/common";
+import { Body, Controller, Get, INestApplication, Post } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
 import { meResponseSchema } from "@tenora/contracts";
 import { eq } from "drizzle-orm";
@@ -6,38 +6,39 @@ import { randomUUID } from "node:crypto";
 import request from "supertest";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { signInCookie } from "../../test/support/http";
-import { seedTestOrganization } from "../../test/support/seed-test-organization";
+import {
+	seedTestOrganization,
+	seedTwoOrganizations,
+} from "../../test/support/seed-test-organization";
 import { AppModule } from "../app.module";
 import type { Database } from "../db/db";
 import { DATABASE } from "../db/db.module";
 import type { Actor } from "./actor";
 import { CurrentActor, RequirePermission } from "./authz.decorators";
-import { AuthzService } from "./authz.service";
 import { memberships } from "./membership.schema";
 
-// Test-only routes that show how a resource controller is guarded.
+// Test-only routes that show how a resource controller is guarded: the permission lets the
+// request in, and the Organization comes from the signed-in user, never from the request.
 @Controller("test")
 class GuardedRoutes {
-	constructor(private readonly authz: AuthzService) {}
+	private readonly notes = new Map<string, string[]>();
 
 	@Get("undeclared")
 	undeclared() {
 		return { ok: true };
 	}
 
-	@Get("units")
+	@Get("notes")
 	@RequirePermission("units:view")
-	units() {
-		return { ok: true };
+	list(@CurrentActor() actor: Actor) {
+		return this.notes.get(actor.organizationId) ?? [];
 	}
 
-	// The pattern for anything that belongs to an Organization: the permission lets the request
-	// in, then the resource's Organization is checked against the actor's.
-	@Get("organizations/:organizationId")
-	@RequirePermission("units:view")
-	organization(@Param("organizationId") organizationId: string, @CurrentActor() actor: Actor) {
-		if (!this.authz.can(actor, "units:view", { organizationId })) throw new ForbiddenException();
-		return { organizationId };
+	@Post("notes")
+	@RequirePermission("units:create")
+	create(@Body("text") text: string, @CurrentActor() actor: Actor) {
+		this.notes.set(actor.organizationId, [...(this.notes.get(actor.organizationId) ?? []), text]);
+		return { ok: true };
 	}
 }
 
@@ -50,7 +51,6 @@ describe("access control", () => {
 		const moduleRef = await Test.createTestingModule({
 			imports: [AppModule],
 			controllers: [GuardedRoutes],
-			providers: [AuthzService],
 		}).compile();
 		app = moduleRef.createNestApplication({ bodyParser: false });
 		await app.init();
@@ -63,7 +63,7 @@ describe("access control", () => {
 	});
 
 	it("rejects a request without a session", async () => {
-		expect((await request(server).get("/test/units")).status).toBe(401);
+		expect((await request(server).get("/test/notes")).status).toBe(401);
 		expect((await request(server).get("/me")).status).toBe(401);
 	});
 
@@ -85,7 +85,7 @@ describe("access control", () => {
 		const cookie = await signInCookie(server, email, password);
 
 		expect((await request(server).get("/me").set("Cookie", cookie)).status).toBe(403);
-		expect((await request(server).get("/test/units").set("Cookie", cookie)).status).toBe(403);
+		expect((await request(server).get("/test/notes").set("Cookie", cookie)).status).toBe(403);
 	});
 
 	it("tells the Admin what they may do on GET /me", async () => {
@@ -97,11 +97,9 @@ describe("access control", () => {
 		expect(response.status).toBe(200);
 		expect(meResponseSchema.parse(response.body)).toMatchObject({
 			user: { id: admin.adminId, email: admin.adminEmail },
-			organizationId: admin.organizationId,
-			role: "admin",
 			permissions: ["units:view", "units:create"],
 		});
-		expect((await request(server).get("/test/units").set("Cookie", cookie)).status).toBe(200);
+		expect((await request(server).get("/test/notes").set("Cookie", cookie)).status).toBe(200);
 	});
 
 	it("stops letting someone in as soon as their membership is removed", async () => {
@@ -114,21 +112,30 @@ describe("access control", () => {
 		expect((await request(server).get("/me").set("Cookie", cookie)).status).toBe(403);
 	});
 
+	it("allows only one membership per user", async () => {
+		const a = await seedTestOrganization(db);
+		const b = await seedTestOrganization(db);
+
+		await expect(
+			db
+				.insert(memberships)
+				.values({ userId: a.adminId, organizationId: b.organizationId, role: "admin" }),
+		).rejects.toThrow();
+	});
+
 	describe("across Organizations", () => {
-		it("lets an Admin reach their own Organization's resource but not another's", async () => {
-			const a = await seedTestOrganization(db);
-			const b = await seedTestOrganization(db);
+		it("keeps one Organization's data from another's Admin", async () => {
+			const { a, b } = await seedTwoOrganizations(db);
 			const cookieA = await signInCookie(server, a.adminEmail, a.adminPassword);
+			const cookieB = await signInCookie(server, b.adminEmail, b.adminPassword);
 
-			const own = await request(server)
-				.get(`/test/organizations/${a.organizationId}`)
-				.set("Cookie", cookieA);
-			const other = await request(server)
-				.get(`/test/organizations/${b.organizationId}`)
-				.set("Cookie", cookieA);
+			await request(server).post("/test/notes").set("Cookie", cookieA).send({ text: "A's note" });
+			await request(server).post("/test/notes").set("Cookie", cookieB).send({ text: "B's note" });
 
-			expect(own.status).toBe(200);
-			expect(other.status).toBe(403);
+			const seenByA = await request(server).get("/test/notes").set("Cookie", cookieA);
+			const seenByB = await request(server).get("/test/notes").set("Cookie", cookieB);
+			expect(seenByA.body).toEqual(["A's note"]);
+			expect(seenByB.body).toEqual(["B's note"]);
 		});
 	});
 });

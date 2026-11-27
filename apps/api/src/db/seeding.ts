@@ -13,8 +13,9 @@ export interface SeedInput {
 }
 
 /**
- * Writes an Organization, its Admin and the Admin's membership straight into the tables, calling no API. Safe to run
- * again: anything already there is left as it is (an existing Admin keeps their password).
+ * Writes an Organization, its Admin and the Admin's membership straight into the tables,
+ * calling no API. Safe to run again: anything already there is left as it is (an existing
+ * Admin keeps their password).
  */
 export async function seedOrganizationAdmin(db: Database, input: SeedInput) {
 	return db.transaction(async (tx) => {

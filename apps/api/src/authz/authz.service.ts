@@ -1,4 +1,4 @@
-import type { Permission } from "@tenora/contracts";
+import { PERMISSIONS, type Permission } from "@tenora/contracts";
 import { Injectable } from "@nestjs/common";
 import type { Actor } from "./actor";
 import { ROLE_PERMISSIONS } from "./roles";
@@ -21,7 +21,8 @@ export class AuthzService {
 		return ROLE_PERMISSIONS[actor.role].includes(permission);
 	}
 
-	permissionsOf(actor: Actor): readonly Permission[] {
-		return ROLE_PERMISSIONS[actor.role];
+	/** Every permission the actor holds, decided by `can` like any other question. */
+	permissionsOf(actor: Actor): Permission[] {
+		return PERMISSIONS.filter((permission) => this.can(actor, permission));
 	}
 }

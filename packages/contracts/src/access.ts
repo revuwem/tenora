@@ -10,11 +10,12 @@ export const ROLES = ["admin"] as const;
 export const roleSchema = z.enum(ROLES);
 export type Role = z.infer<typeof roleSchema>;
 
-/** `GET /me`: who is signed in and what they may do, so the web app can hide what they can't. */
+/**
+ * `GET /me`: who is signed in and what they may do, so the web app can hide what they can't.
+ * Permissions, not the role, so the web app has nothing to check a role name against.
+ */
 export const meResponseSchema = z.object({
 	user: z.object({ id: z.string(), email: z.string(), name: z.string() }),
-	organizationId: z.string(),
-	role: roleSchema,
 	permissions: z.array(permissionSchema),
 });
 export type MeResponse = z.infer<typeof meResponseSchema>;

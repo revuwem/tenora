@@ -14,9 +14,7 @@ export class MeController {
 	getMe(@CurrentActor() actor: Actor): MeResponse {
 		return {
 			user: actor.user,
-			organizationId: actor.organizationId,
-			role: actor.role,
-			permissions: [...this.authz.permissionsOf(actor)],
+			permissions: this.authz.permissionsOf(actor),
 		};
 	}
 }

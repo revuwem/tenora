@@ -21,8 +21,6 @@ describe("roleSchema", () => {
 describe("meResponseSchema", () => {
 	const me = {
 		user: { id: "u1", email: "admin@example.com", name: "Admin" },
-		organizationId: "o1",
-		role: "admin",
 		permissions: ["units:view", "units:create"],
 	};
 

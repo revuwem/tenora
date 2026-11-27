@@ -1,10 +1,9 @@
 import { type ExecutionContext, ForbiddenException, UnauthorizedException } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
 import { describe, expect, it, vi } from "vitest";
-import { Public } from "../auth/public";
 import type { CurrentUserService } from "../auth/current-user.service";
 import type { Actor } from "./actor";
-import { AnyMember, RequirePermission } from "./authz.decorators";
+import { AnyMember, Public, RequirePermission } from "./authz.decorators";
 import { AuthzGuard } from "./authz.guard";
 import type { AuthzService } from "./authz.service";
 import type { MembershipsRepository } from "./memberships.repository";
