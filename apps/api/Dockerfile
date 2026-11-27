@@ -65,7 +65,7 @@ RUN version="$(bun -p 'require("./package.json").devDependencies.turbo' | sed -E
 
 
 # ---- prod: runtime dependencies only ----
-# Separate from the builder so the runtime image leaves out jest, typescript, the nest
+# Separate from the builder so the runtime image leaves out vitest, typescript, the nest
 # CLI and the other devDependencies. BuildKit builds this in parallel with `builder`.
 FROM bun AS prod-deps
 

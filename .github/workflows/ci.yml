@@ -40,6 +40,12 @@ jobs:
       - name: Install dependencies (reproducible)
         run: bun ci
 
+      # Component tests in web and ui run in a real Chromium (Vitest browser mode).
+      # Browser binaries are not cached on purpose, as Playwright advises.
+      - name: Install Chromium for browser tests
+        working-directory: packages/ui
+        run: bunx playwright install --with-deps chromium
+
       # Turbo's local cache: unchanged packages replay lint/type-check/test results.
       # A unique key per commit always saves a fresh cache; restore-keys loads the latest.
       - name: Cache turbo
