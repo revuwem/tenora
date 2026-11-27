@@ -17,6 +17,7 @@ Single-context: one `CONTEXT.md` and `docs/adr/` at the repo root. See `docs/age
 - `bun run check` runs lint, type-check, format and tests across the repo. Run it before finishing; a Stop hook (`.claude/hooks/stop-check.sh`) runs it too when the tree has changes.
 - `bun run test` runs all tests. One package: `bun run --filter <pkg> test` (`api`, `web`, `@tenora/ui`, `@tenora/contracts`). One file: `bun run --filter <pkg> test -- <path>`. Watch mode: `test:watch` in the package.
 - Never `bun test`: that is Bun's own runner, not Vitest.
+- `api` integration tests are `*.int.spec.ts`: they run in `test` against a real Postgres, in a throwaway database of their own. Set `TEST_DATABASE_URL` to use a server you have (CI does); otherwise they start a disposable `postgres` container, so Docker must be running. `*.spec.ts` stay free of I/O.
 - Specs sit next to the source as `*.spec.ts(x)`. In `web` and `@tenora/ui`, `*.spec.tsx` are component tests in a real Chromium (Vitest browser mode, `vitest-browser-react`) and `*.spec.ts` are logic tests in Node. In `api`, specs run in Node.
 - Browser tests need Chromium once per machine: `bunx playwright install chromium` (run in `packages/ui`).
 - `api` e2e tests are on demand only: `bun run --filter api test:e2e`. They are not in `test`, Turbo or CI.

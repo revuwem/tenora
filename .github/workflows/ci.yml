@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
-    # Postgres for the migration step. Keep the image, credentials and healthcheck in sync
+    # Postgres for the migration step and the integration tests. Keep the image, credentials and healthcheck in sync
     # with docker-compose.dev.yml and docker-compose.prod.yml.
     services:
       postgres:
@@ -41,6 +41,8 @@ jobs:
 
     env:
       DATABASE_URL: postgres://tenora:tenora@localhost:5432/tenora
+      # Integration tests create their own database on this server.
+      TEST_DATABASE_URL: postgres://tenora:tenora@localhost:5432/tenora
 
     steps:
       - name: Checkout repository

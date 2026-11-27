@@ -1,20 +1,14 @@
-import { eq } from "drizzle-orm";
 import { requireEnv } from "../common/env";
-import { organizations } from "../domain/organizations/organization.schema";
 import { runWithDatabase } from "./db";
+import { seedOrganizationAdmin } from "./seeding";
 
-// Writes rows directly and calls no API. Safe to run again: it only adds what is missing.
+// Reads the values from the environment (a git-ignored .env locally, see .env.example).
 runWithDatabase(async (db) => {
-	const name = requireEnv("ORGANIZATION_NAME");
-	const [existing] = await db
-		.select({ id: organizations.id })
-		.from(organizations)
-		.where(eq(organizations.name, name))
-		.limit(1);
-	if (existing) {
-		console.log(`Organization "${name}" already exists`);
-		return;
-	}
-	await db.insert(organizations).values({ name });
-	console.log(`Organization "${name}" created`);
+	const { organizationId, userId } = await seedOrganizationAdmin(db, {
+		organizationName: requireEnv("ORGANIZATION_NAME"),
+		adminName: process.env.ADMIN_NAME || "Admin",
+		adminEmail: requireEnv("ADMIN_EMAIL"),
+		adminPassword: requireEnv("ADMIN_PASSWORD"),
+	});
+	console.log(`Seeded organization ${organizationId} with admin ${userId}`);
 });

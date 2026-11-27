@@ -27,6 +27,9 @@ x-api-dev: &api-dev
     # Fake dev-only credentials; the database is only reachable on the compose network.
     - DATABASE_URL=postgres://tenora:tenora@postgres:5432/tenora
     - ORGANIZATION_NAME=${ORGANIZATION_NAME:-Demo Organization}
+    # Fake dev-only values. The seeded Admin signs in with these.
+    - ADMIN_EMAIL=${ADMIN_EMAIL:-admin@example.com}
+    - ADMIN_PASSWORD=${ADMIN_PASSWORD:-dev-admin-password}
   volumes:
     - .:/app
     - /app/node_modules
@@ -69,6 +72,9 @@ services:
       - NODE_ENV=development
       - PORT=8000
       - DATABASE_URL=postgres://tenora:tenora@postgres:5432/tenora
+      - BETTER_AUTH_SECRET=dev-only-secret-at-least-thirty-two-characters
+      # The browser reaches the api through the web app's origin.
+      - BETTER_AUTH_URL=http://localhost:${WEB_PORT:-3000}
       # Browser origin allowed to call the api (the web app's published port).
       - CORS_ORIGIN=http://localhost:${WEB_PORT:-3000}
       # Poll for changes: file events don't always cross the macOS bind mount.

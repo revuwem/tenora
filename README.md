@@ -40,9 +40,11 @@ bun install
 bun run dev
 ```
 
+**Sign-in:** Better Auth serves `/api/auth/*` from the api (email and password, sessions in the database, HttpOnly cookie). In the dev stack the seed creates the Admin `admin@example.com` with password `dev-admin-password` (override with `ADMIN_EMAIL` / `ADMIN_PASSWORD` in your shell). Outside Docker, copy `apps/api/.env.example` to `apps/api/.env`. The prod stack needs `BETTER_AUTH_SECRET` (at least 32 random characters) in the environment. `bun run --filter api auth:generate` regenerates Better Auth's tables in `src/auth/auth.schema.ts` after its options change; then run `db:generate`.
+
 ### Database commands
 
-Run from `apps/api` (or `bun run --filter api <script>`), with `DATABASE_URL` set: `db:generate` (SQL migration from the schema re-exported in `src/db/schema.ts`, written to `apps/api/drizzle`), `db:migrate`, `db:seed` (safe to run again). The built image applies migrations with `node dist/db/migrate.js`. In CI, `db:migrate` runs against a Postgres service container.
+Run from `apps/api` (or `bun run --filter api <script>`), with `DATABASE_URL` set: `db:generate` (SQL migration from the schema re-exported in `src/db/schema.ts`, written to `apps/api/drizzle`), `db:migrate`, `db:seed` (safe to run again). The built image applies migrations with `node dist/db/migrate.js`. In CI, `db:migrate` runs against a Postgres service container. Integration tests (`*.int.spec.ts`) need Docker running, or `TEST_DATABASE_URL` pointing at a Postgres server.
 
 ## Running the production build locally
 
