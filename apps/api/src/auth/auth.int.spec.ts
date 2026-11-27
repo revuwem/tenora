@@ -5,6 +5,7 @@ import request from "supertest";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { seedTestOrganization } from "../../test/support/seed-test-organization";
 import { AppModule } from "../app.module";
+import { Public } from "../authz/authz.decorators";
 import { AuthModule } from "./auth.module";
 import type { Database } from "../db/db";
 import { DATABASE } from "../db/db.module";
@@ -16,6 +17,7 @@ class WhoAmIController {
 	constructor(private readonly currentUser: CurrentUserService) {}
 
 	@Get("who-am-i")
+	@Public()
 	async whoAmI(@Req() request: { headers: Record<string, string> }) {
 		return (await this.currentUser.fromRequest(request)) ?? { user: null };
 	}

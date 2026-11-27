@@ -40,7 +40,9 @@ bun install
 bun run dev
 ```
 
-**Sign-in:** Better Auth serves `/api/auth/*` from the api (email and password, sessions in the database, HttpOnly cookie). In the dev stack the seed creates the Admin `admin@example.com` with password `dev-admin-password` (override with `ADMIN_EMAIL` / `ADMIN_PASSWORD` in your shell). Outside Docker, copy `apps/api/.env.example` to `apps/api/.env`; Bun loads it for the `db:*` scripts and `bun run dev`. The prod stack needs `BETTER_AUTH_SECRET` (at least 32 random characters) in the environment. `bun run --filter api auth:generate` regenerates Better Auth's tables in `src/auth/auth.schema.ts` after its options change; then run `db:generate`.
+**Sign-in:** Better Auth serves `/api/auth/*` from the api (email and password, sessions in the database, HttpOnly cookie). In the dev stack the seed creates the Organization, its Admin `admin@example.com` and their membership with password `dev-admin-password` (override with `ADMIN_EMAIL` / `ADMIN_PASSWORD` in your shell). Outside Docker, copy `apps/api/.env.example` to `apps/api/.env`; Bun loads it for the `db:*` scripts and `bun run dev`. The prod stack needs `BETTER_AUTH_SECRET` (at least 32 random characters) in the environment. `bun run --filter api auth:generate` regenerates Better Auth's tables in `src/auth/auth.schema.ts` after its options change; then run `db:generate`.
+
+**Access control:** every api route must declare what it needs, or it is rejected with 403: `@Public()` (anyone), `@AnyMember()` (any user with a membership) or `@RequirePermission("units:view")`. No session gives 401; a user without a membership or the permission gets 403. `GET /me` returns the signed-in user, their role and their permissions. The permission and role lists live in `packages/contracts`; the role-to-permission map is `ROLE_PERMISSIONS` in `apps/api/src/authz/roles.ts`.
 
 ### Database commands
 
